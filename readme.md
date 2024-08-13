@@ -10,6 +10,8 @@
 
 -sub 설치가이드를 따라 진행
 
+# exe build 하기
+
 각 폴더들은 electron 파일로써 main, renderer, preload, index.html 파일로 구성되어 있다. 
 
 동봉되어 있는 pakage.json의 npm module 을 설치하기 위해
