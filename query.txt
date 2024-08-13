@@ -1,0 +1,24 @@
+SELECT 
+    timestamp AS "time",
+    status AS "status",
+    topic AS "Topic",
+    CH2O AS "Formaldehyde",
+    MQ131 AS "Ozone",
+    VOC AS "Volatile Organic Compounds",
+    NH3 AS "Ammonia",
+    CO AS "Carbon Monoxide",
+    NO2 AS "Nitrogen Dioxide",
+    CO2 AS "Carbon Dioxide",
+    Temperature AS "Temperature (°C)",
+    Humidity AS "Humidity (%)",
+    C3H8 AS "Propane",
+    C4H10 AS "Butane",
+    CH4 AS "Methane",
+    H2 AS "Hydrogen",
+    C2H5OH AS "Ethanol"
+FROM 
+    sensor_data
+WHERE
+  topic IN ('case1','case4') AND status IN (0,1)
+ORDER BY 
+    timestamp ASC

@@ -1,0 +1,56 @@
+{
+  "name": "electronactivate",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build" : "electron-builder --win --x64",
+    "deploy": "electron-builder --windows nsis:ia32"
+  },
+  "build": {
+    "productName": "test",
+    "appId": "com.electron.hello",
+    "asar": false,
+    "protocols": {
+      "name": "test",
+      "schemes": [
+        "test"
+      ]
+    },
+    "win": {
+      "target": [
+        "zip",
+        "nsis"
+      ],
+      "icon": "./resources/installer/Icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "directories": {
+      "buildResources": "./resources/installer/",
+      "output": "./exeResult/",
+      "app": "."
+    },
+    "extraResources": [
+      "node_modules/***/**/*"
+    ]
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3",
+    "express": "^4.19.2",
+    "mqtt": "^5.9.0",
+    "mysql": "^2.18.1",
+    "pkg": "^5.8.1",
+    "serialport": "^12.0.0",
+    "sqlite3": "^5.1.7",
+    "webpack": "^5.93.0",
+    "webpack-cli": "^5.1.4",
+    "mqtt-packet": "^9.0.0"
+  }
+}
