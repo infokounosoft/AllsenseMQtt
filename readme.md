@@ -24,6 +24,4 @@ exe실행파일을 build하기 위해 npm run build를 터미널에 입력하면
 
 # mqtt.ino
 
-사용하는 내 문서 -> arduino -> library 폴더의 mics6814-i2c 폴더를
-
-mqtt 폴더안의 mics6814-i2c로 교체
+mqtt 연결 테스트
