@@ -32,10 +32,10 @@ window.electron.onSerialStatus((status) => {
     scrollBox.scrollTop = scrollBox.scrollHeight;
 });
 
-// document.getElementById('startButton').addEventListener('click', () => {
-//     window.electron.checkOn();
-// });
+document.getElementById('startButton').addEventListener('click', () => {
+    window.electron.checkOn();
+});
 
-// document.getElementById('endButton').addEventListener('click', () => {
-//     window.electron.checkOff();
-// });
+document.getElementById('endButton').addEventListener('click', () => {
+    window.electron.checkOff();
+});

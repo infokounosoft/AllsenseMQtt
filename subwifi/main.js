@@ -196,9 +196,10 @@ app.on('window-all-closed', () => {
 
 ipcMain.on('checkOn', async (event) => {
     try {
-        if(sendData != "data sending...."){
-            event.sender.send('serial-status', 'mqtt 연결 실패');
-        }else if(dataBuffer.status == 0){
+        // if(sendData != "mqtt 구독 성공"){
+        //     event.sender.send('serial-status', 'mqtt 연결 실패');
+        // }else 
+        if(dataBuffer.status == 0){
             dataBuffer.status = 1;
             console.log("check start");
             event.sender.send('serial-status', '측정 시작');
@@ -214,9 +215,10 @@ ipcMain.on('checkOn', async (event) => {
 
 ipcMain.on('checkOff', async (event) => {
     try {
-        if(sendData != "data sending...."){
-            event.sender.send('serial-status', '연결 실패');
-        }else if(dataBuffer.status == 1){
+        // if(sendData != "mqtt 구독 성공"){
+        //     event.sender.send('serial-status', '연결 실패');
+        // }else 
+        if(dataBuffer.status == 1){
             dataBuffer.status = 0;
             console.log("check end");
             event.sender.send('serial-status', '측정 종료');
