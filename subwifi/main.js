@@ -12,7 +12,7 @@ let dataBuffer = {}; // 수집된 데이터를 저장할 객체로 변경
 dataBuffer.status = 0;
 // SQLite 데이터베이스 연결
 const db = new sqlite3.Database('sensor_data.sqlite');
-
+let insertDataInterval;
 
 const toKoreanTime = (date) => {
     const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
@@ -141,7 +141,14 @@ function subscribeToMqtt() {
                 console.log("측정이 종료되었습니다.");
             }
             // 데이터 삽입
-            insertData(timestamp, topic, dataBuffer);
+            if (!insertDataInterval) {
+                insertDataInterval = setInterval(() => {
+                    const now = new Date();
+                    const time = new Date(now.getTime());
+                    const timestamp = time.toISOString();
+                    insertData(timestamp, topic, dataBuffer);
+                }, 500);
+            }
         } catch (e) {
             console.error('Error parsing message:', e);
         }
