@@ -37,47 +37,26 @@
 
 // mqtt
 #include <WiFi.h>
+#include <WiFiClient.h>
+#include <WebServer.h>
 #include <PubSubClient.h>
-const char* ssid = "Kouno_Zone_2G";
-const char* password = "1092724855";
-const char* mqtt_server = "10.0.0.70";
+
+const char* ssid = "Kouno_Allsense_Ap";
+const char* password = "kouno1092724855";
 WiFiClient espClient;
 PubSubClient client(espClient);
-void setup_wifi() {
-  delay(10);
-  // We start by connecting to a WiFi network
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
 
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-}
-
-void callback(char* topic, byte* message, unsigned int length) {
-  Serial.print("Message arrived on topic: ");
-  Serial.print(topic);
-  Serial.print(". Message: ");
-  String messageTemp;
-  
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)message[i]);
-    messageTemp += (char)message[i];
-  }
-  Serial.println();
-  if (String(topic) == "jude") {
-    // Serial.print("data recieved ");
-  }
-}
+WiFiServer server(80);
+String wifissid; // WiFi SSID를 저장할 변수
+String wifipassword; // WiFi 비밀번호를 저장할 변수
+String topic;
+String mqtt_server;
+String html;
+int n = 0; // WiFi 네트워크 수
+String ssidList[100]; // 최대 20개의 SSID 저장
+String rssiList[100]; // RSSI 값 저장
+String channelList[100]; // 채널 저장
+String encryptionList[100]; // 암호화 타입 저장
 
 void reconnect() {
   // Loop until we're reconnected
@@ -88,7 +67,7 @@ void reconnect() {
     if (client.connect("ESP32Client")) { // 고유 id 아무거나 해도됌
       Serial.println("connected");
       // Subscribe
-      client.subscribe("jude");
+      client.subscribe(topic.c_str());
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -98,6 +77,34 @@ void reconnect() {
     }
   }
 }
+
+String getEncryptionType(int type) {
+  switch (type) {
+    case WIFI_AUTH_OPEN: return "open";
+    case WIFI_AUTH_WEP: return "WEP";
+    case WIFI_AUTH_WPA_PSK: return "WPA";
+    case WIFI_AUTH_WPA2_PSK: return "WPA2";
+    case WIFI_AUTH_WPA_WPA2_PSK: return "WPA+WPA2";
+    case WIFI_AUTH_WPA2_ENTERPRISE: return "WPA2-EAP";
+    case WIFI_AUTH_WPA3_PSK: return "WPA3";
+    case WIFI_AUTH_WPA2_WPA3_PSK: return "WPA2+WPA3";
+    case WIFI_AUTH_WAPI_PSK: return "WAPI";
+    default: return "unknown";
+  }
+}
+
+void scanNetworks() {
+  n = WiFi.scanNetworks();
+  for (int i = 0; i < n; ++i) {
+    ssidList[i] = WiFi.SSID(i);
+    rssiList[i] = String(WiFi.RSSI(i));
+    channelList[i] = String(WiFi.channel(i));
+    encryptionList[i] = getEncryptionType(WiFi.encryptionType(i));
+  }
+  // 메모리 해제
+  WiFi.scanDelete();
+}
+
 
 #if REL_EN_ETHER_ENC
 
@@ -979,8 +986,15 @@ void setup()
   delay(100); // wait for initialization      // 50
   Serial.println("Test");
   
-  setup_wifi();
-  client.setServer(mqtt_server, 1883);
+  Serial.print("Setting soft access point mode");
+  WiFi.softAP(ssid, password);
+  // wifi_ap모드가 wifi 와 ap연결을 동시에 할 수 있도록 함.
+  WiFi.mode(WIFI_AP);
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+  server.begin();
+  scanNetworks();
   // client.setCallback(callback);
   // //mqtt 와 연결
 
@@ -989,7 +1003,8 @@ void setup()
   void *SpStart = NULL;
   StackPtrAtStart = (void *)&SpStart;
   watermarkStart = uxTaskGetStackHighWaterMark(NULL);
-  StackPtrEnd = StackPtrAtStart - watermarkStart;
+  StackPtrEnd = (void *)((char *)StackPtrAtStart - watermarkStart);
+  // StackPtrAtStart - watermarkStart;
   // ## STACK SIZE
   // #########################
 
@@ -1824,18 +1839,6 @@ void loop()
   //   value++;
   //   delay(2000); // bluetooth stack will go into congestion, if too many packets are sent
   // }
-
-  // //mqtt part
-  // if (!client.connected()) {
-  //   reconnect();
-  // }
-  // client.loop();
-
-  // // MQTT 메시지 발행 예시
-  // char msg[] = "Hello, MQTT!";
-  // client.publish("your/topic", msg);
-  // delay(1000);
-  // //mqtt part
   
 #if DBG_TASK_QUEUE2
     if (xQueueReceive(queuePkt, buf_rcvpkt, (TickType_t)0))
@@ -1970,36 +1973,158 @@ void loop()
 
   // delay(1);                             // 1ms
   delay(10); // 10ms
-  if (!client.connected()) {
-    reconnect();
+  WiFiClient client1=server.available();
+  if(mqtt_server.length()!=0){
+    client.setServer(mqtt_server.c_str(), 1883);
+    if (!client.connected()) {
+      reconnect();
+    }
+    float o3 = taskParm2.lpPktData->mq131;
+    float co = taskParm2.lpPktData->co;
+    float no2 = taskParm2.lpPktData->no2;
+    float nh3 = taskParm2.lpPktData->nh3;
+    float c3h8 = taskParm2.lpPktData->c3h8;
+    float c4h10 = taskParm2.lpPktData->c4h10;
+    float ch4 = taskParm2.lpPktData->ch4;
+    float h2 = taskParm2.lpPktData->h2;
+    float c2h5oh = taskParm2.lpPktData->c2h5oh;
+    float ch2o = taskParm2.lpPktData->ch2o;
+    uint16_t srawVoc = taskParm2.lpPktData->voc;
+    float co2 = taskParm2.lpPktData->co2;
+    float temperature = taskParm2.lpPktData->temp;
+    float humidity = taskParm2.lpPktData->humi;
+    char messageChar[255];
+    int len = snprintf(messageChar, sizeof(messageChar),"VOC:%u CH2O:%.4f MQ131:%.4f CO:%.4f NO2:%.4f NH3:%.4f C3H8:%.4f C4H10:%.4f CH4:%.4f H2:%.4f C2H5OH:%.4f CO2:%.4f Temperature:%.4f Humidity:%.4f", srawVoc, ch2o, o3, co, no2, nh3, c3h8, c4h10, ch4, h2, c2h5oh, co2, temperature, humidity);
+    if (len < 0) {
+        // snprintf에서 에러 발생
+        Serial.printf("Error generating message\n");
+    } else if (len >= sizeof(messageChar)) {
+        // 메시지가 버퍼를 초과함
+        Serial.printf("Message truncated\n");
+    } else {
+        // 정상적으로 메시지 생성됨
+        client.publish(topic.c_str(), messageChar);
+    }
   }
-  client.loop();
 
-  float o3 = taskParm2.lpPktData->mq131;
-  float co = taskParm2.lpPktData->co;
-  float no2 = taskParm2.lpPktData->no2;
-  float nh3 = taskParm2.lpPktData->nh3;
-  float c3h8 = taskParm2.lpPktData->c3h8;
-  float c4h10 = taskParm2.lpPktData->c4h10;
-  float ch4 = taskParm2.lpPktData->ch4;
-  float h2 = taskParm2.lpPktData->h2;
-  float c2h5oh = taskParm2.lpPktData->c2h5oh;
-  float ch2o = taskParm2.lpPktData->ch2o;
-  uint16_t srawVoc = taskParm2.lpPktData->voc;
-  float co2 = taskParm2.lpPktData->co2;
-  float temperature = taskParm2.lpPktData->temp;
-  float humidity = taskParm2.lpPktData->humi;
-  char messageChar[255];
-  int len = snprintf(messageChar, sizeof(messageChar),"VOC:%u CH2O:%.4f MQ131:%.4f CO:%.4f NO2:%.4f NH3:%.4f C3H8:%.4f C4H10:%.4f CH4:%.4f H2:%.4f C2H5OH:%.4f CO2:%.4f Temperature:%.4f Humidity:%.4f", srawVoc, ch2o, o3, co, no2, nh3, c3h8, c4h10, ch4, h2, c2h5oh, co2, temperature, humidity);
-  if (len < 0) {
-      // snprintf에서 에러 발생
-      Serial.printf("Error generating message\n");
-  } else if (len >= sizeof(messageChar)) {
-      // 메시지가 버퍼를 초과함
-      Serial.printf("Message truncated\n");
-  } else {
-      // 정상적으로 메시지 생성됨
-      client.publish("jude", messageChar);
+  if(client1){
+    String request = client1.readStringUntil('\r');
+    Serial.println(request); // 요청을 출력하여 디버깅
+
+    // "wifissid=", "wifipassword=", "mqtt_server="가 포함되어 있는지 확인
+    if (request.indexOf("wifissid=") != -1 && request.indexOf("wifipassword=") != -1 && request.indexOf("mqtt_server=") != -1) {
+        int ssidStartIndex = request.indexOf("wifissid=") + 9; // '=' 이후에서 시작
+        int ssidEndIndex = request.indexOf('&', ssidStartIndex);
+        if (ssidEndIndex == -1) ssidEndIndex = request.length();
+        wifissid = request.substring(ssidStartIndex, ssidEndIndex);
+
+        int passwordStartIndex = request.indexOf("wifipassword=") + 13; // '=' 이후에서 시작
+        int passwordEndIndex = request.indexOf('&', passwordStartIndex);
+        if (passwordEndIndex == -1) passwordEndIndex = request.length();
+        wifipassword = request.substring(passwordStartIndex, passwordEndIndex);
+
+        int topicStartIndex = request.indexOf("topic=") + 6; // '=' 이후에서 시작
+        int topicEndIndex = request.indexOf('&', topicStartIndex);
+        if (topicEndIndex == -1) topicEndIndex = request.length();
+        topic = request.substring(topicStartIndex, topicEndIndex);
+
+        int mqttStartIndex = request.indexOf("mqtt_server=") + 12; // '=' 이후에서 시작
+        int mqttEndIndex = request.indexOf(' ', mqttStartIndex);
+        if (mqttEndIndex == -1) mqttEndIndex = request.length();
+        mqtt_server = request.substring(mqttStartIndex, mqttEndIndex); // mqtt_server 변수 추가
+
+        Serial.print("WiFi SSID: ");
+        Serial.println(wifissid); // SSID 출력
+        Serial.print("WiFi Password: ");
+        Serial.println(wifipassword); // 비밀번호 출력
+        Serial.print("Topic: ");
+        Serial.println(topic); // 비밀번호 출력
+        Serial.print("MQTT Server: ");
+        Serial.println(mqtt_server); // MQTT 서버 출력
+    }
+    html = "<!DOCTYPE html>\
+    <html>\
+    <head>\
+    <style>\
+    .scrollbox {\
+      width: 750px;\
+      height: 550px;\
+      overflow: auto;\
+      border: 1px solid #ccc;\
+      padding: 10px;\
+      margin: 0 auto; /* 중앙 정렬을 위한 자동 마진 */\
+    }\
+    body {\
+      text-align: center; /* 모든 텍스트를 가운데 정렬 */\
+    }\
+    form {\
+      display: inline-block; /* 폼을 인라인 블록으로 설정하여 가운데 정렬 */\
+    }\
+    </style>\
+    </head>\
+    <body>\
+    <center><h1>WiFi Networks</h1></center>\
+    <div class=\"scrollbox\">";
+
+    // WiFi 네트워크 스캔
+    if (n == 0) {
+      html += "<p>No networks found</p>";
+    } else {
+      html += "<table>\
+      <tr><th>Nr</th><th>SSID</th><th>RSSI</th><th>Channel</th><th>Encryption</th></tr>";
+      for (int i = 0; i < n; ++i) {
+        html += "<tr>";
+        html += "<td>" + String(i + 1) + "</td>";
+        html += "<td>" + ssidList[i] + "</td>";
+        html += "<td>" + rssiList[i] + "</td>";
+        html += "<td>" + channelList[i] + "</td>";
+        html += "<td>" + encryptionList[i] + "</td>";
+        html += "</tr>";
+      }
+      html += "</table>";
+    }
+
+    html += "</div>\
+    <br>\
+    <center><h1>Kouno Allsense Soft access point</h1></center> \
+    <center><h2>Web Server</h2></center> \
+    <form action=\"/\" method=\"GET\"> \
+    <input type=\"text\" name=\"wifissid\" placeholder=\"WiFi SSID\" required> \
+    <br> \
+    <input type=\"text\" name=\"wifipassword\" placeholder=\"WiFi Password\" required> \
+    <br> \
+    <input type=\"text\" name=\"topic\" placeholder=\"Topic\" required> \
+    <br> \
+    <input type=\"text\" name=\"mqtt_server\" placeholder=\"Mqtt Server\" required> \
+    <br> \
+    <button type=\"submit\">Change WiFi</button><br><br> \
+    </form> \
+    <div class=\"scrollbox\"> \
+    <p>wifissid: " + wifissid + "</p> \
+    <p>wifipassword: " + wifipassword + "</p> \
+    <p>topic: " + topic + "</p> \
+    <p>Mqtt Server: " + mqtt_server + "</p> \
+    </div> \
+    </body>\
+    </html>";
+    client1.print(html);
+    if ((wifissid.length() != 0) && (wifipassword.length() != 0) && (WiFi.status() != WL_CONNECTED)) {
+      Serial.println("\nSetting Station configuration ... ");
+      WiFi.begin(wifissid.c_str(), wifipassword.c_str());
+      Serial.println(String("Connecting to ")+ wifissid);
+      int attemptCount = 0; // 시도 횟수 카운터
+      while (WiFi.status() != WL_CONNECTED && attemptCount < 10){
+        delay(500);
+        Serial.print(".");
+        attemptCount++;
+      }
+      if (WiFi.status() == WL_CONNECTED) {
+          Serial.println("\nConnected, IP address: ");
+          Serial.println(WiFi.localIP());
+      } else {
+          Serial.println("\nFailed to connect after 10 attempts.");
+      }
+    }
   }
 
 
