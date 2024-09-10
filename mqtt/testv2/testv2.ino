@@ -134,10 +134,17 @@ void loop() {
     form {\
       display: inline-block; /* 폼을 인라인 블록으로 설정하여 가운데 정렬 */\
     }\
+    button {\
+      margin: 10px; /* 버튼 간격 조정 */\
+    }\
     </style>\
     </head>\
     <body>\
     <center><h1>WiFi Networks</h1></center>\
+    <center>\
+      <button onclick=\"location.href='current_page.html'\">현재 페이지</button>\
+      <button onclick=\"location.href='graph.html'\">그래프 창</button>\
+    </center>\
     <div class=\"scrollbox\">";
 
     // WiFi 네트워크 스캔
@@ -178,9 +185,22 @@ void loop() {
     <p>wifipassword: " + wifipassword + "</p> \
     <p>topic: " + topic + "</p> \
     <p>Mqtt Server: " + mqtt_server + "</p> \
-    </div> \
+    ";
+
+    // WiFi 연결 상태 확인
+    if (WiFi.status() == WL_CONNECTED) {
+        html += "<p>WiFi connected</p>";
+    }
+
+    // MQTT 연결 상태 확인
+    if (client.connected()) {
+        html += "<p>MQTT connected</p>";
+    }
+
+    html += "</div> \
     </body>\
     </html>";
+
     client1.print(html);
     if ((wifissid.length() != 0) && (wifipassword.length() != 0) && (WiFi.status() != WL_CONNECTED)) {
       Serial.println("\nSetting Station configuration ... ");
