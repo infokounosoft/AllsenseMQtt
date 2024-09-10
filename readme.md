@@ -6,6 +6,18 @@ sub, subwifi는 정해진 주소의 topic을 모두 구독하여 sqlite에 전�
 
 mqtt는 allsense기기 자체에서 wifi접속, ap연결 및 데이터 mqtt 발행을 위해 테스트한 개발 과정에서의 시도들로 최종 적용 본인 iot_edge외의 test 또는 mqtt로 시작하는 파일은 무시해도 상관없다.
 
+# 기본 개념
+
+-index.html -> 화면표시
+
+-main.js -> 프로그램 작동시 사용되는 코드
+
+-preload.js -> 최초 실행시 동작하며 preload에 선언된 것만 renderer를 통해 index.html에 표현할 수 있다.
+
+-renderer.js -> main에서 실행된 프로그램을 html에 표현
+
+-즉, 상호작용 단계가 main -> preload -> renderer -> index -> renderer -> main 반복...
+
 # PubLocal
 -pub자체에서 sqlite에 저장 mqtt통신을 사용하지 않는다. port로 전달되는 값을 그대로 사용하기 때문
 
@@ -81,3 +93,7 @@ iot_edge_light.cpp의 경우 마지막으로 사용한 최종 버전이다.
 test로 시작하는 ino는 개발 과정을 거치며 사용했던 라이브러리 또는 접근 방향으로 최종 버전에 적용되지 않은 것들이다.
 
 차후에 allsense에 업데이트 가능성 有
+
+# 드라이버 설치
+
+-port로 전달받는 pub, publocal의 경우 센서 데이터를 전달받기 위해 유선 usb port 연결이 필수적인데 드라이버 설치가 필요한 경우가 발생할 수 있다.
