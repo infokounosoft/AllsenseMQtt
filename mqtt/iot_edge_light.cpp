@@ -43,20 +43,21 @@
 
 const char* ssid = "Kouno_Allsense_Ap";
 const char* password = "kouno1092724855";
+
 WiFiClient espClient;
 PubSubClient client(espClient);
+WebServer server(80);
 
-WiFiServer server(80);
-String wifissid; // WiFi SSID를 저장할 변수
-String wifipassword; // WiFi 비밀번호를 저장할 변수
-String topic;
-String mqtt_server;
-String html;
 int n = 0; // WiFi 네트워크 수
 String ssidList[100]; // 최대 20개의 SSID 저장
 String rssiList[100]; // RSSI 값 저장
 String channelList[100]; // 채널 저장
 String encryptionList[100]; // 암호화 타입 저장
+
+String wifissid; // WiFi SSID를 저장할 변수
+String wifipassword; // WiFi 비밀번호를 저장할 변수
+String topic;
+String mqtt_server;
 
 void reconnect() {
   // Loop until we're reconnected
@@ -105,6 +106,188 @@ void scanNetworks() {
   WiFi.scanDelete();
 }
 
+void handleRoot() {
+  String html = "<!DOCTYPE html>\
+  <html>\
+  <head>\
+  <style>\
+  .scrollbox {\
+    width: 750px;\
+    height: 250px;\
+    overflow: auto;\
+    border: 1px solid #ccc;\
+    padding: 10px;\
+    margin: 0 auto;\ 
+  }\
+  body {\
+    text-align: center;\
+  }\
+  .header {\
+    text-align: center;\
+  }\
+  .button-container {\
+    text-align: right;\
+    margin-top: 10px;\
+  }\
+  button {\
+    margin: 10px;\
+  }\
+  </style>\
+  </head>\
+  <body>\
+    <div class=\"header\">\
+      <h1>WiFi Networks</h1>\
+    </div>\
+    <div class=\"button-container\">\
+      <button onclick=\"location.href='/'\">Main Page</button>\
+      <button onclick=\"location.href='/data'\">Sensor Data</button>\
+    </div>\
+    <div class=\"scrollbox\">\
+  ";
+
+  if (n == 0) {
+    html += "<p>No networks found</p>";
+  } else {
+    html += "<table>\
+    <tr><th>Nr</th><th>SSID</th><th>RSSI</th><th>Channel</th><th>Encryption</th></tr>";
+    for (int i = 0; i < n; ++i) {
+      html += "<tr>";
+      html += "<td>" + String(i + 1) + "</td>";
+      html += "<td>" + ssidList[i] + "</td>";
+      html += "<td>" + rssiList[i] + "</td>";
+      html += "<td>" + channelList[i] + "</td>";
+      html += "<td>" + encryptionList[i] + "</td>";
+      html += "</tr>";
+    }
+    html += "</table>";
+  }
+
+  html += "</div>\
+  <br>\
+  <center><h1>Kouno Allsense Soft access point</h1></center>\
+  <center><h2>Web Server</h2></center>\
+  <form action=\"/change\" method=\"GET\">\
+    <input type=\"text\" name=\"wifissid\" placeholder=\"WiFi SSID\" required>\
+    <br>\
+    <input type=\"text\" name=\"wifipassword\" placeholder=\"WiFi Password\" required>\
+    <br>\
+    <input type=\"text\" name=\"topic\" placeholder=\"Topic\" required>\
+    <br>\
+    <input type=\"text\" name=\"mqtt_server\" placeholder=\"Mqtt Server\" required>\
+    <br>\
+    <button type=\"submit\">Change WiFi</button>\
+    <br><br>\
+  </form>\
+  ";
+  
+  html += "</body>\
+  </html>";
+
+  server.send(200, "text/html", html);
+}
+
+void handleData() {
+  String dataHtml = "<!DOCTYPE html>\
+  <html>\
+  <head>\
+  <style>\
+  .scrollbox {\
+    width: 750px;\
+    height: 250px;\
+    overflow: auto;\
+    border: 1px solid #ccc;\
+    padding: 10px;\
+    margin: 0 auto;\ 
+  }\
+  body {\
+    text-align: center;\
+  }\
+  .header {\
+    text-align: center;\
+  }\
+  .button-container {\
+    text-align: right;\
+    margin-top: 10px;\
+  }\
+  button {\
+    margin: 10px;\
+  }\
+  </style>\
+  </head>\
+  <body>\
+    <div class=\"header\">\
+      <h1>WiFi Networks</h1>\
+    </div>\
+    <div class=\"button-container\">\
+      <button onclick=\"location.href='/'\">Main Page</button>\
+      <button onclick=\"location.href='/data'\">Sensor Data</button>\
+    </div>\
+    <div class=\"scrollbox\">\
+      <h1>Received Data</h1>\
+      <p>wifissid: " + wifissid + "</p>\
+      <p>wifipassword: " + wifipassword + "</p>\
+      <p>topic: " + topic + "</p>\
+      <p>Mqtt Server: " + mqtt_server + "</p>\
+    </div>\
+  </body>\
+  </html>";
+
+  server.send(200, "text/html", dataHtml);
+}
+
+void handleChange() {
+  wifissid = server.arg("wifissid");
+  wifipassword = server.arg("wifipassword");
+  topic = server.arg("topic");
+  mqtt_server = server.arg("mqtt_server");
+
+  String response = "<!DOCTYPE html>\
+  <html>\
+  <head>\
+  <style>\
+  .scrollbox {\
+    width: 750px;\
+    height: 250px;\
+    overflow: auto;\
+    border: 1px solid #ccc;\
+    padding: 10px;\
+    margin: 0 auto;\
+  }\
+  body {\
+    text-align: center;\
+  }\
+  .header {\
+    text-align: center;\
+  }\
+  .button-container {\
+    text-align: right;\
+    margin-top: 10px;\
+  }\
+  button {\
+    margin: 10px;\
+  }\
+  </style>\
+  </head>\
+  <body>\
+    <div class=\"header\">\
+      <h1>WiFi Networks</h1>\
+    </div>\
+    <div class=\"button-container\">\
+      <button onclick=\"location.href='/'\">Main Page</button>\
+      <button onclick=\"location.href='/data'\">Sensor Data</button>\
+    </div>\
+    <div class=\"scrollbox\">\
+      <h1>Received Data</h1>\
+      <p>wifissid: " + wifissid + "</p>\
+      <p>wifipassword: " + wifipassword + "</p>\
+      <p>topic: " + topic + "</p>\
+      <p>Mqtt Server: " + mqtt_server + "</p>\
+    </div>\
+  </body>\
+  </html>";
+  
+  server.send(200, "text/html", response);
+}
 
 #if REL_EN_ETHER_ENC
 
@@ -993,6 +1176,9 @@ void setup()
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
+  server.on("/", handleRoot);
+  server.on("/data", handleData);
+  server.on("/change", HTTP_GET, handleChange);
   server.begin();
   scanNetworks();
   // client.setCallback(callback);
@@ -1803,7 +1989,7 @@ void taskSensorI2C(void *parameter) {
 
 void loop()
 {
-
+  server.handleClient();
   // void taskSensorI2S(void *parameter)
   // {
   //   int sample = 0;
@@ -1973,12 +2159,38 @@ void loop()
 
   // delay(1);                             // 1ms
   delay(10); // 10ms
-  WiFiClient client1=server.available();
-  if(mqtt_server.length()!=0){
+  
+
+  if ((wifissid.length() != 0) && (wifipassword.length() != 0) && (WiFi.status() != WL_CONNECTED)) {
+    Serial.println("\nSetting Station configuration ... ");
+    WiFi.begin(wifissid.c_str(), wifipassword.c_str());
+    Serial.println(String("Connecting to ")+ wifissid);
+    int attemptCount = 0; // 시도 횟수 카운터
+    while (WiFi.status() != WL_CONNECTED && attemptCount < 10){
+      delay(500);
+      Serial.print(".");
+      attemptCount++;
+    }
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("\nConnected, IP address: ");
+        Serial.println(WiFi.localIP());
+    } else {
+        Serial.println("\nFailed to connect after 10 attempts.");
+    }
+  }
+
+  if(mqtt_server.length()!=0 && !client.connected()){
+    // && !client.connected()
     client.setServer(mqtt_server.c_str(), 1883);
     if (!client.connected()) {
       reconnect();
     }
+    // String messageChar = "hellow";
+    // client.publish(topic.c_str(), messageChar.c_str());
+    // Serial.print("hellow");
+  }
+  
+  if (client.connected() && (WiFi.status() == WL_CONNECTED)) {
     float o3 = taskParm2.lpPktData->mq131;
     float co = taskParm2.lpPktData->co;
     float no2 = taskParm2.lpPktData->no2;
@@ -2004,128 +2216,9 @@ void loop()
     } else {
         // 정상적으로 메시지 생성됨
         client.publish(topic.c_str(), messageChar);
-    }
+    }    
   }
 
-  if(client1){
-    String request = client1.readStringUntil('\r');
-    Serial.println(request); // 요청을 출력하여 디버깅
-
-    // "wifissid=", "wifipassword=", "mqtt_server="가 포함되어 있는지 확인
-    if (request.indexOf("wifissid=") != -1 && request.indexOf("wifipassword=") != -1 && request.indexOf("mqtt_server=") != -1) {
-        int ssidStartIndex = request.indexOf("wifissid=") + 9; // '=' 이후에서 시작
-        int ssidEndIndex = request.indexOf('&', ssidStartIndex);
-        if (ssidEndIndex == -1) ssidEndIndex = request.length();
-        wifissid = request.substring(ssidStartIndex, ssidEndIndex);
-
-        int passwordStartIndex = request.indexOf("wifipassword=") + 13; // '=' 이후에서 시작
-        int passwordEndIndex = request.indexOf('&', passwordStartIndex);
-        if (passwordEndIndex == -1) passwordEndIndex = request.length();
-        wifipassword = request.substring(passwordStartIndex, passwordEndIndex);
-
-        int topicStartIndex = request.indexOf("topic=") + 6; // '=' 이후에서 시작
-        int topicEndIndex = request.indexOf('&', topicStartIndex);
-        if (topicEndIndex == -1) topicEndIndex = request.length();
-        topic = request.substring(topicStartIndex, topicEndIndex);
-
-        int mqttStartIndex = request.indexOf("mqtt_server=") + 12; // '=' 이후에서 시작
-        int mqttEndIndex = request.indexOf(' ', mqttStartIndex);
-        if (mqttEndIndex == -1) mqttEndIndex = request.length();
-        mqtt_server = request.substring(mqttStartIndex, mqttEndIndex); // mqtt_server 변수 추가
-
-        Serial.print("WiFi SSID: ");
-        Serial.println(wifissid); // SSID 출력
-        Serial.print("WiFi Password: ");
-        Serial.println(wifipassword); // 비밀번호 출력
-        Serial.print("Topic: ");
-        Serial.println(topic); // 비밀번호 출력
-        Serial.print("MQTT Server: ");
-        Serial.println(mqtt_server); // MQTT 서버 출력
-    }
-    html = "<!DOCTYPE html>\
-    <html>\
-    <head>\
-    <style>\
-    .scrollbox {\
-      width: 750px;\
-      height: 550px;\
-      overflow: auto;\
-      border: 1px solid #ccc;\
-      padding: 10px;\
-      margin: 0 auto; /* 중앙 정렬을 위한 자동 마진 */\
-    }\
-    body {\
-      text-align: center; /* 모든 텍스트를 가운데 정렬 */\
-    }\
-    form {\
-      display: inline-block; /* 폼을 인라인 블록으로 설정하여 가운데 정렬 */\
-    }\
-    </style>\
-    </head>\
-    <body>\
-    <center><h1>WiFi Networks</h1></center>\
-    <div class=\"scrollbox\">";
-
-    // WiFi 네트워크 스캔
-    if (n == 0) {
-      html += "<p>No networks found</p>";
-    } else {
-      html += "<table>\
-      <tr><th>Nr</th><th>SSID</th><th>RSSI</th><th>Channel</th><th>Encryption</th></tr>";
-      for (int i = 0; i < n; ++i) {
-        html += "<tr>";
-        html += "<td>" + String(i + 1) + "</td>";
-        html += "<td>" + ssidList[i] + "</td>";
-        html += "<td>" + rssiList[i] + "</td>";
-        html += "<td>" + channelList[i] + "</td>";
-        html += "<td>" + encryptionList[i] + "</td>";
-        html += "</tr>";
-      }
-      html += "</table>";
-    }
-
-    html += "</div>\
-    <br>\
-    <center><h1>Kouno Allsense Soft access point</h1></center> \
-    <center><h2>Web Server</h2></center> \
-    <form action=\"/\" method=\"GET\"> \
-    <input type=\"text\" name=\"wifissid\" placeholder=\"WiFi SSID\" required> \
-    <br> \
-    <input type=\"text\" name=\"wifipassword\" placeholder=\"WiFi Password\" required> \
-    <br> \
-    <input type=\"text\" name=\"topic\" placeholder=\"Topic\" required> \
-    <br> \
-    <input type=\"text\" name=\"mqtt_server\" placeholder=\"Mqtt Server\" required> \
-    <br> \
-    <button type=\"submit\">Change WiFi</button><br><br> \
-    </form> \
-    <div class=\"scrollbox\"> \
-    <p>wifissid: " + wifissid + "</p> \
-    <p>wifipassword: " + wifipassword + "</p> \
-    <p>topic: " + topic + "</p> \
-    <p>Mqtt Server: " + mqtt_server + "</p> \
-    </div> \
-    </body>\
-    </html>";
-    client1.print(html);
-    if ((wifissid.length() != 0) && (wifipassword.length() != 0) && (WiFi.status() != WL_CONNECTED)) {
-      Serial.println("\nSetting Station configuration ... ");
-      WiFi.begin(wifissid.c_str(), wifipassword.c_str());
-      Serial.println(String("Connecting to ")+ wifissid);
-      int attemptCount = 0; // 시도 횟수 카운터
-      while (WiFi.status() != WL_CONNECTED && attemptCount < 10){
-        delay(500);
-        Serial.print(".");
-        attemptCount++;
-      }
-      if (WiFi.status() == WL_CONNECTED) {
-          Serial.println("\nConnected, IP address: ");
-          Serial.println(WiFi.localIP());
-      } else {
-          Serial.println("\nFailed to connect after 10 attempts.");
-      }
-    }
-  }
 
 
 #if DBG_I2S
