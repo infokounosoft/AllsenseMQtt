@@ -40,13 +40,19 @@
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 
-const char* ssid = "Kouno_Allsense_Ap";
+// WiFi 설정
+const char* ssid = "Kouno_Allsense_AP";
 const char* password = "kouno1092724855";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
-WebServer server(80);
+
+// 웹서버 초기화
+AsyncWebServer server(80);
 
 int n = 0; // WiFi 네트워크 수
 String ssidList[100]; // 최대 20개의 SSID 저장
@@ -106,187 +112,22 @@ void scanNetworks() {
   WiFi.scanDelete();
 }
 
-void handleRoot() {
-  String html = "<!DOCTYPE html>\
-  <html>\
-  <head>\
-  <style>\
-  .scrollbox {\
-    width: 750px;\
-    height: 250px;\
-    overflow: auto;\
-    border: 1px solid #ccc;\
-    padding: 10px;\
-    margin: 0 auto;\ 
-  }\
-  body {\
-    text-align: center;\
-  }\
-  .header {\
-    text-align: center;\
-  }\
-  .button-container {\
-    text-align: right;\
-    margin-top: 10px;\
-  }\
-  button {\
-    margin: 10px;\
-  }\
-  </style>\
-  </head>\
-  <body>\
-    <div class=\"header\">\
-      <h1>WiFi Networks</h1>\
-    </div>\
-    <div class=\"button-container\">\
-      <button onclick=\"location.href='/'\">Main Page</button>\
-      <button onclick=\"location.href='/data'\">Sensor Data</button>\
-    </div>\
-    <div class=\"scrollbox\">\
-  ";
-
-  if (n == 0) {
-    html += "<p>No networks found</p>";
+String getConnectionStatuss() {
+  String status;
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    status += "WiFi connected<br>";
   } else {
-    html += "<table>\
-    <tr><th>Nr</th><th>SSID</th><th>RSSI</th><th>Channel</th><th>Encryption</th></tr>";
-    for (int i = 0; i < n; ++i) {
-      html += "<tr>";
-      html += "<td>" + String(i + 1) + "</td>";
-      html += "<td>" + ssidList[i] + "</td>";
-      html += "<td>" + rssiList[i] + "</td>";
-      html += "<td>" + channelList[i] + "</td>";
-      html += "<td>" + encryptionList[i] + "</td>";
-      html += "</tr>";
-    }
-    html += "</table>";
+    status += "WiFi not connected<br>";
   }
 
-  html += "</div>\
-  <br>\
-  <center><h1>Kouno Allsense Soft access point</h1></center>\
-  <center><h2>Web Server</h2></center>\
-  <form action=\"/change\" method=\"GET\">\
-    <input type=\"text\" name=\"wifissid\" placeholder=\"WiFi SSID\" required>\
-    <br>\
-    <input type=\"text\" name=\"wifipassword\" placeholder=\"WiFi Password\" required>\
-    <br>\
-    <input type=\"text\" name=\"topic\" placeholder=\"Topic\" required>\
-    <br>\
-    <input type=\"text\" name=\"mqtt_server\" placeholder=\"Mqtt Server\" required>\
-    <br>\
-    <button type=\"submit\">Change WiFi</button>\
-    <br><br>\
-  </form>\
-  ";
-  
-  html += "</body>\
-  </html>";
+  if (mqtt_server.length() != 0 && client.connected()) {
+    status += "MQTT connected<br>";
+  } else {
+    status += "MQTT not connect<br>";
+  }
 
-  server.send(200, "text/html", html);
-}
-
-void handleData() {
-  String dataHtml = "<!DOCTYPE html>\
-  <html>\
-  <head>\
-  <style>\
-  .scrollbox {\
-    width: 750px;\
-    height: 250px;\
-    overflow: auto;\
-    border: 1px solid #ccc;\
-    padding: 10px;\
-    margin: 0 auto;\ 
-  }\
-  body {\
-    text-align: center;\
-  }\
-  .header {\
-    text-align: center;\
-  }\
-  .button-container {\
-    text-align: right;\
-    margin-top: 10px;\
-  }\
-  button {\
-    margin: 10px;\
-  }\
-  </style>\
-  </head>\
-  <body>\
-    <div class=\"header\">\
-      <h1>WiFi Networks</h1>\
-    </div>\
-    <div class=\"button-container\">\
-      <button onclick=\"location.href='/'\">Main Page</button>\
-      <button onclick=\"location.href='/data'\">Sensor Data</button>\
-    </div>\
-    <div class=\"scrollbox\">\
-      <h1>Received Data</h1>\
-      <p>wifissid: " + wifissid + "</p>\
-      <p>wifipassword: " + wifipassword + "</p>\
-      <p>topic: " + topic + "</p>\
-      <p>Mqtt Server: " + mqtt_server + "</p>\
-    </div>\
-  </body>\
-  </html>";
-
-  server.send(200, "text/html", dataHtml);
-}
-
-void handleChange() {
-  wifissid = server.arg("wifissid");
-  wifipassword = server.arg("wifipassword");
-  topic = server.arg("topic");
-  mqtt_server = server.arg("mqtt_server");
-
-  String response = "<!DOCTYPE html>\
-  <html>\
-  <head>\
-  <style>\
-  .scrollbox {\
-    width: 750px;\
-    height: 250px;\
-    overflow: auto;\
-    border: 1px solid #ccc;\
-    padding: 10px;\
-    margin: 0 auto;\
-  }\
-  body {\
-    text-align: center;\
-  }\
-  .header {\
-    text-align: center;\
-  }\
-  .button-container {\
-    text-align: right;\
-    margin-top: 10px;\
-  }\
-  button {\
-    margin: 10px;\
-  }\
-  </style>\
-  </head>\
-  <body>\
-    <div class=\"header\">\
-      <h1>WiFi Networks</h1>\
-    </div>\
-    <div class=\"button-container\">\
-      <button onclick=\"location.href='/'\">Main Page</button>\
-      <button onclick=\"location.href='/data'\">Sensor Data</button>\
-    </div>\
-    <div class=\"scrollbox\">\
-      <h1>Received Data</h1>\
-      <p>wifissid: " + wifissid + "</p>\
-      <p>wifipassword: " + wifipassword + "</p>\
-      <p>topic: " + topic + "</p>\
-      <p>Mqtt Server: " + mqtt_server + "</p>\
-    </div>\
-  </body>\
-  </html>";
-  
-  server.send(200, "text/html", response);
+  return status;
 }
 
 #if REL_EN_ETHER_ENC
@@ -1176,11 +1017,235 @@ void setup()
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
-  server.on("/", handleRoot);
-  server.on("/data", handleData);
-  server.on("/change", HTTP_GET, handleChange);
-  server.begin();
   scanNetworks();
+  
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    // 쿼리 파라미터를 가져옵니다.
+    if (request->hasParam("wifissid")) {
+      wifissid = request->getParam("wifissid")->value();
+    }
+    if (request->hasParam("wifipassword")) {
+      wifipassword = request->getParam("wifipassword")->value();
+    }
+    if (request->hasParam("topic")) {
+      topic = request->getParam("topic")->value();
+    }
+    if (request->hasParam("mqtt_server")) {
+      mqtt_server = request->getParam("mqtt_server")->value();
+    }
+    String html = "<!DOCTYPE html>\
+    <html>\
+    <head>\
+    <style>\
+    .scrollbox {\
+      width: 750px;\
+      height: 250px;\
+      overflow: auto;\
+      border: 1px solid #ccc;\
+      padding: 10px;\
+      margin: 0 auto;\
+    }\
+    body {\
+      text-align: center;\
+    }\
+    .header {\
+      text-align: center;\
+    }\
+    .button-container {\
+      text-align: right;\
+      margin-top: 10px;\
+    }\
+    button {\
+      margin: 10px;\
+    }\
+    </style>\
+    </head>\
+    <body>\
+      <div class=\"header\">\
+        <h1>WiFi Networks</h1>\
+      </div>\
+      <div class=\"button-container\">\
+        <button onclick=\"location.href='/'\">Main Page</button>\
+        <button onclick=\"location.href='/data'\">Sensor Data</button>\
+      </div>\
+      <div class=\"scrollbox\">\
+    ";
+
+    if (n == 0) {
+      html += "<p>No networks found</p>";
+    } else {
+      html += "<table>\
+      <tr><th>Nr</th><th>SSID</th><th>RSSI</th><th>Channel</th><th>Encryption</th></tr>";
+      for (int i = 0; i < n; ++i) {
+        html += "<tr>";
+        html += "<td>" + String(i + 1) + "</td>";
+        html += "<td>" + ssidList[i] + "</td>";
+        html += "<td>" + rssiList[i] + "</td>";
+        html += "<td>" + channelList[i] + "</td>";
+        html += "<td>" + encryptionList[i] + "</td>";
+        html += "</tr>";
+      }
+      html += "</table>";
+    }
+
+    html += "</div>\
+    <br>\
+    <center><h1>Kouno Allsense Soft access point</h1></center>\
+    <center><h2>Web Server</h2></center>\
+    <form id=\"wifiForm\">\
+      <input type=\"text\" name=\"wifissid\" placeholder=\"WiFi SSID\" required>\
+      <br>\
+      <input type=\"text\" name=\"wifipassword\" placeholder=\"WiFi Password\" required>\
+      <br>\
+      <input type=\"text\" name=\"topic\" placeholder=\"Topic\" required>\
+      <br>\
+      <input type=\"text\" name=\"mqtt_server\" placeholder=\"Mqtt Server\" required>\
+      <br>\
+      <button type=\"submit\">Change WiFi</button>\
+      <br><br>\
+    </form>\
+    <div id=\"responseBox\" style=\"border:1px solid #ccc; height:200px; overflow-y:scroll;\">\
+      <p id='wifiSsid'>Wi-Fi SSID: " + wifissid + "</p>\
+      <p id='wifiPassword'>Wi-Fi password: " + wifipassword + "</p>\
+      <p id='topic'>topic: " + topic + "</p>\
+      <p id='mqttServer'>MQTT server: " + mqtt_server + "</p>\
+      <p id='connectionStatus'>" + getConnectionStatuss() + "</p>\
+    </div>\
+    <script>\
+    function updateStatus() {\
+      fetch('/config')\
+        .then(response => response.json())\
+        .then(data => {\
+          document.getElementById('connectionStatus').innerHTML = data.connectionStatus;\
+        });\
+    }\
+    setInterval(updateStatus, 5000); // 5초마다 상태 업데이트\
+    </script>\
+    ";
+      
+    html += "</body>\
+    </html>";
+
+    request->send(200, "text/html", html);
+  });
+
+  server.on("/data", HTTP_GET, [](AsyncWebServerRequest *request){
+    String dataHtml = "<!DOCTYPE html>\
+    <html>\
+    <head>\
+    <style>\
+    .scrollbox {\
+      width: 750px;\
+      height: 250px;\
+      overflow: auto;\
+      border: 1px solid #ccc;\
+      padding: 10px;\
+      margin: 0 auto;\
+    }\
+    body {\
+      text-align: center;\
+    }\
+    .header {\
+      text-align: center;\
+    }\
+    .button-container {\
+      text-align: right;\
+      margin-top: 10px;\
+    }\
+    button {\
+      margin: 10px;\
+    }\
+    </style>\
+    </head>\
+    <body>\
+      <div class=\"header\">\
+        <h1>WiFi Networks</h1>\
+      </div>\
+      <div class=\"button-container\">\
+        <button onclick=\"location.href='/'\">Main Page</button>\
+        <button onclick=\"location.href='/data'\">Sensor Data</button>\
+      </div>\
+    ";
+
+    dataHtml += "<center><h1>Allsense Data</h1></center>\
+    <center><h2>Web Server</h2></center>\
+    <div id=\"responseBox\" style=\"border:1px solid #ccc; height:300px; overflow-y:scroll;\">\
+      <p id='wifiSsid'>Wi-Fi SSID: " + wifissid + "</p>\
+      <p id='wifiPassword'>Wi-Fi password: " + wifipassword + "</p>\
+      <p id='topic'>topic: " + topic + "</p>\
+      <p id='mqttServer'>MQTT server: " + mqtt_server + "</p>\
+      <p id='connectionStatus'>" + getConnectionStatuss() + "</p>\
+      <p id='o3'></p>\
+      <p id='co'></p>\
+      <p id='no2'></p>\
+      <p id='nh3'></p>\
+      <p id='c3h8'></p>\
+      <p id='c4h10'></p>\
+      <p id='ch4'></p>\
+      <p id='h2'></p>\
+      <p id='c2h5oh'></p>\
+      <p id='ch2o'></p>\
+      <p id='srawVoc'></p>\
+      <p id='co2'></p>\
+      <p id='temperature'></p>\
+      <p id='humidity'></p>\
+    </div>\
+    <script>\
+    function updateStatus() {\
+      fetch('/config')\
+        .then(response => response.json())\
+        .then(data => {\
+          document.getElementById('connectionStatus').innerHTML = data.connectionStatus;\
+          document.getElementById('o3').innerHTML = 'O3: ' + data.o3 + ' ppm';\
+          document.getElementById('co').innerHTML = 'CO: ' + data.co + ' ppm';\
+          document.getElementById('no2').innerHTML = 'NO2: ' + data.no2 + ' ppm';\
+          document.getElementById('nh3').innerHTML = 'NH3: ' + data.nh3 + ' ppm';\
+          document.getElementById('c3h8').innerHTML = 'C3H8: ' + data.c3h8 + ' ppm';\
+          document.getElementById('c4h10').innerHTML = 'C4H10: ' + data.c4h10 + ' ppm';\
+          document.getElementById('ch4').innerHTML = 'CH4: ' + data.ch4 + ' ppm';\
+          document.getElementById('h2').innerHTML = 'H2: ' + data.h2 + ' ppm';\
+          document.getElementById('c2h5oh').innerHTML = 'C2H5OH: ' + data.c2h5oh + ' ppm';\
+          document.getElementById('ch2o').innerHTML = 'CH2O: ' + data.ch2o + ' ppm';\
+          document.getElementById('srawVoc').innerHTML = 'sRaw VOC: ' + data.srawVoc;\
+          document.getElementById('co2').innerHTML = 'CO2: ' + data.co2 + ' ppm';\
+          document.getElementById('temperature').innerHTML = 'Temperature: ' + data.temperature + ' °C';\
+          document.getElementById('humidity').innerHTML = 'Humidity: ' + data.humidity + ' %';\
+        });\
+    }\
+    setInterval(updateStatus, 500);\
+    </script>\
+    ";
+      
+    dataHtml += "</body>\
+    </html>";
+
+    request->send(200, "text/html", dataHtml);
+  });
+
+  server.on("/config", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String jsonResponse = "{";
+    jsonResponse += "\"connectionStatus\": \"" + getConnectionStatuss() + "\",";
+    
+    jsonResponse += "\"o3\": " + String(taskParm2.lpPktData->mq131) + ",";
+    jsonResponse += "\"co\": " + String(taskParm2.lpPktData->co) + ",";
+    jsonResponse += "\"no2\": " + String(taskParm2.lpPktData->no2) + ",";
+    jsonResponse += "\"nh3\": " + String(taskParm2.lpPktData->nh3) + ",";
+    jsonResponse += "\"c3h8\": " + String(taskParm2.lpPktData->c3h8) + ",";
+    jsonResponse += "\"c4h10\": " + String(taskParm2.lpPktData->c4h10) + ",";
+    jsonResponse += "\"ch4\": " + String(taskParm2.lpPktData->ch4) + ",";
+    jsonResponse += "\"h2\": " + String(taskParm2.lpPktData->h2) + ",";
+    jsonResponse += "\"c2h5oh\": " + String(taskParm2.lpPktData->c2h5oh) + ",";
+    jsonResponse += "\"ch2o\": " + String(taskParm2.lpPktData->ch2o) + ",";
+    jsonResponse += "\"srawVoc\": " + String(taskParm2.lpPktData->voc) + ",";
+    jsonResponse += "\"co2\": " + String(taskParm2.lpPktData->co2) + ",";
+    jsonResponse += "\"temperature\": " + String(taskParm2.lpPktData->temp) + ",";
+    jsonResponse += "\"humidity\": " + String(taskParm2.lpPktData->humi);
+    
+    jsonResponse += "}";
+    request->send(200, "application/json", jsonResponse);
+  });
+
+  server.begin();
   // client.setCallback(callback);
   // //mqtt 와 연결
 
@@ -1989,7 +2054,6 @@ void taskSensorI2C(void *parameter) {
 
 void loop()
 {
-  server.handleClient();
   // void taskSensorI2S(void *parameter)
   // {
   //   int sample = 0;
