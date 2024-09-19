@@ -1,3 +1,5 @@
+//ap를 열고 ap에 접속하여 wifi정보를 입력하면 wifi연결
+
 #include "WiFi.h"
 
 #define port 80
@@ -70,7 +72,7 @@ void loop(){
     <form action=\"/\" method=\"GET\"> \
     <input type=\"text\" name=\"wifissid\" placeholder=\"WiFi SSID\" required> \
     <br> \
-    <input type=\"password\" name=\"wifipassword\" placeholder=\"WiFi Password\" required> \
+    <input type=\"text\" name=\"wifipassword\" placeholder=\"WiFi Password\" required> \
     <br> \
     <button type=\"submit\">Change WiFi</button><br><br> \
     </form> \

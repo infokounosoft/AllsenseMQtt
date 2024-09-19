@@ -1,3 +1,5 @@
+//ap를 열고 ap에 접속하여 wifi정보를 입력하면 wifi연결 및 mqtt 연결 발행
+//wifi scan 추가
 #include "WiFi.h"
 #include <WiFiClient.h>
 #include <WebServer.h>
@@ -142,8 +144,8 @@ void loop() {
     <body>\
     <center><h1>WiFi Networks</h1></center>\
     <center>\
-      <button onclick=\"location.href='current_page.html'\">현재 페이지</button>\
-      <button onclick=\"location.href='graph.html'\">그래프 창</button>\
+      <button onclick=\"location.href='current_page.html'\">current page</button>\
+      <button onclick=\"location.href='graph.html'\">grape page</button>\
     </center>\
     <div class=\"scrollbox\">";
 
@@ -204,7 +206,7 @@ void loop() {
     client1.print(html);
     if ((wifissid.length() != 0) && (wifipassword.length() != 0) && (WiFi.status() != WL_CONNECTED)) {
       Serial.println("\nSetting Station configuration ... ");
-      WiFi.begin(wifissid, wifipassword);
+      WiFi.begin(wifissid.c_str(), wifipassword.c_str());
       Serial.println(String("Connecting to ")+ wifissid);
       int attemptCount = 0; // 시도 횟수 카운터
       while (WiFi.status() != WL_CONNECTED && attemptCount < 10){

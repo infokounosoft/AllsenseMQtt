@@ -1,3 +1,6 @@
+//ap를 열고 ap에 접속하여 wifi정보를 입력하면 wifi연결 및 mqtt 연결 발행
+//wifi scan 추가 
+//webserver를 활용하여 여러페이지 구현 시도
 #include "WiFi.h"
 #include <WebServer.h>
 #include <PubSubClient.h>

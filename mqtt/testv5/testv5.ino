@@ -1,3 +1,7 @@
+//ap를 열고 ap에 접속하여 wifi정보를 입력하면 wifi연결 및 mqtt 연결 발행
+//wifi scan 추가 
+//webserver를 활용하여 여러페이지 구현 시도 -> 비동기 웹서버로 구현 시도
+//연결 상태 값을 비동기로 수신하여 웹페이지에 출력
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -97,6 +101,8 @@ void setup() {
   Serial.print("Setting soft access point mode");
   WiFi.softAP(ssid, password);
   WiFi.mode(WIFI_AP);
+  //ap모드로 ap를 열고 값을 전달받은후 sta모드로 mqtt연결??
+  // WiFi.mode(WIFI_STA);
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
@@ -126,7 +132,7 @@ void setup() {
       overflow: auto;\
       border: 1px solid #ccc;\
       padding: 10px;\
-      margin: 0 auto;\ 
+      margin: 0 auto;\
     }\
     body {\
       text-align: center;\
@@ -223,7 +229,7 @@ void setup() {
       overflow: auto;\
       border: 1px solid #ccc;\
       padding: 10px;\
-      margin: 0 auto;\ 
+      margin: 0 auto;\
     }\
     body {\
       text-align: center;\
@@ -291,13 +297,13 @@ void setup() {
 void loop() {
   if ((wifissid.length() != 0) && (wifipassword.length() != 0) && (WiFi.status() != WL_CONNECTED)) {
     Serial.println("\nSetting Station configuration ... ");
-    WiFi.begin(wifissid, wifipassword);
+    WiFi.begin(wifissid.c_str(), wifipassword.c_str());
     Serial.println(String("Connecting to ")+ wifissid);
     int attemptCount = 0; // 시도 횟수 카운터
     while (WiFi.status() != WL_CONNECTED && attemptCount < 10){
       delay(500);
       Serial.print(".");
-      attemptCount++;
+      // attemptCount++;
     }
     if (WiFi.status() == WL_CONNECTED) {
         Serial.println("\nConnected, IP address: ");
@@ -310,6 +316,7 @@ void loop() {
   if(mqtt_server.length()!=0 && !client.connected()){
     // && !client.connected()
     client.setServer(mqtt_server.c_str(), 1883);
+    Serial.println(mqtt_server.c_str());
     if (!client.connected()) {
       reconnect();
     }
@@ -320,17 +327,17 @@ void loop() {
 }
 
 
-    float o3 = taskParm2.lpPktData->mq131;
-    float co = taskParm2.lpPktData->co;
-    float no2 = taskParm2.lpPktData->no2;
-    float nh3 = taskParm2.lpPktData->nh3;
-    float c3h8 = taskParm2.lpPktData->c3h8;
-    float c4h10 = taskParm2.lpPktData->c4h10;
-    float ch4 = taskParm2.lpPktData->ch4;
-    float h2 = taskParm2.lpPktData->h2;
-    float c2h5oh = taskParm2.lpPktData->c2h5oh;
-    float ch2o = taskParm2.lpPktData->ch2o;
-    uint16_t srawVoc = taskParm2.lpPktData->voc;
-    float co2 = taskParm2.lpPktData->co2;
-    float temperature = taskParm2.lpPktData->temp;
-    float humidity = taskParm2.lpPktData->humi;
+    // float o3 = taskParm2.lpPktData->mq131;
+    // float co = taskParm2.lpPktData->co;
+    // float no2 = taskParm2.lpPktData->no2;
+    // float nh3 = taskParm2.lpPktData->nh3;
+    // float c3h8 = taskParm2.lpPktData->c3h8;
+    // float c4h10 = taskParm2.lpPktData->c4h10;
+    // float ch4 = taskParm2.lpPktData->ch4;
+    // float h2 = taskParm2.lpPktData->h2;
+    // float c2h5oh = taskParm2.lpPktData->c2h5oh;
+    // float ch2o = taskParm2.lpPktData->ch2o;
+    // uint16_t srawVoc = taskParm2.lpPktData->voc;
+    // float co2 = taskParm2.lpPktData->co2;
+    // float temperature = taskParm2.lpPktData->temp;
+    // float humidity = taskParm2.lpPktData->humi;
