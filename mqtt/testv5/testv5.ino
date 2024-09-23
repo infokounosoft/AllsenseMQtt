@@ -100,7 +100,9 @@ void setup() {
   delay(1000);
   Serial.print("Setting soft access point mode");
   WiFi.softAP(ssid, password);
-  WiFi.mode(WIFI_AP);
+  WiFi.mode(WIFI_MODE_APSTA);
+  // WiFi.mode(WIFI_AP_STA);
+  // WiFi.mode(WIFI_AP);
   //ap모드로 ap를 열고 값을 전달받은후 sta모드로 mqtt연결??
   // WiFi.mode(WIFI_STA);
   IPAddress IP = WiFi.softAPIP();
@@ -303,7 +305,7 @@ void loop() {
     while (WiFi.status() != WL_CONNECTED && attemptCount < 10){
       delay(500);
       Serial.print(".");
-      // attemptCount++;
+      attemptCount++;
     }
     if (WiFi.status() == WL_CONNECTED) {
         Serial.println("\nConnected, IP address: ");

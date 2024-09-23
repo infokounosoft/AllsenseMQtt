@@ -46,7 +46,7 @@
 
 // WiFi 설정
 const char* ssid = "Kouno_Allsense_AP";
-const char* password = "kouno1092724855";
+const char* password = "1092724855";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -1013,7 +1013,7 @@ void setup()
   Serial.print("Setting soft access point mode");
   WiFi.softAP(ssid, password);
   // wifi_ap모드가 wifi 와 ap연결을 동시에 할 수 있도록 함.
-  WiFi.mode(WIFI_AP);
+  WiFi.mode(WIFI_MODE_APSTA);
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
@@ -2230,7 +2230,7 @@ void loop()
     WiFi.begin(wifissid.c_str(), wifipassword.c_str());
     Serial.println(String("Connecting to ")+ wifissid);
     int attemptCount = 0; // 시도 횟수 카운터
-    while (WiFi.status() != WL_CONNECTED && attemptCount < 10){
+    while (WiFi.status() != WL_CONNECTED && attemptCount < 1000){
       delay(500);
       Serial.print(".");
       attemptCount++;
@@ -2279,6 +2279,7 @@ void loop()
         Serial.printf("Message truncated\n");
     } else {
         // 정상적으로 메시지 생성됨
+        delay(500);
         client.publish(topic.c_str(), messageChar);
     }    
   }
