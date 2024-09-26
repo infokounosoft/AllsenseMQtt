@@ -30,41 +30,7 @@ String wifipassword; // WiFi 비밀번호를 저장할 변수
 String topic;
 String mqtt_server;
 
-String getEncryptionType(int type) {
-  switch (type) {
-    case WIFI_AUTH_OPEN: return "open";
-    case WIFI_AUTH_WEP: return "WEP";
-    case WIFI_AUTH_WPA_PSK: return "WPA";
-    case WIFI_AUTH_WPA2_PSK: return "WPA2";
-    case WIFI_AUTH_WPA_WPA2_PSK: return "WPA+WPA2";
-    case WIFI_AUTH_WPA2_ENTERPRISE: return "WPA2-EAP";
-    case WIFI_AUTH_WPA3_PSK: return "WPA3";
-    case WIFI_AUTH_WPA2_WPA3_PSK: return "WPA2+WPA3";
-    case WIFI_AUTH_WAPI_PSK: return "WAPI";
-    default: return "unknown";
-  }
-}
-
-void reconnect() {
-  // Loop until we're reconnected
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    
-    if (client.connect("ESP32Client")) { // 고유 id 아무거나 해도됌
-      Serial.println("connected");
-      // Subscribe
-      client.subscribe(topic.c_str());
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
-}
-
+// wifi 확인
 void scanNetworks() {
   n = WiFi.scanNetworks();
   for (int i = 0; i < n; ++i) {
@@ -93,6 +59,42 @@ String getConnectionStatus() {
   }
 
   return status;
+}
+
+String getEncryptionType(int type) {
+  switch (type) {
+    case WIFI_AUTH_OPEN: return "open";
+    case WIFI_AUTH_WEP: return "WEP";
+    case WIFI_AUTH_WPA_PSK: return "WPA";
+    case WIFI_AUTH_WPA2_PSK: return "WPA2";
+    case WIFI_AUTH_WPA_WPA2_PSK: return "WPA+WPA2";
+    case WIFI_AUTH_WPA2_ENTERPRISE: return "WPA2-EAP";
+    case WIFI_AUTH_WPA3_PSK: return "WPA3";
+    case WIFI_AUTH_WPA2_WPA3_PSK: return "WPA2+WPA3";
+    case WIFI_AUTH_WAPI_PSK: return "WAPI";
+    default: return "unknown";
+  }
+}
+// wifi 확인 끝
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    
+    if (client.connect("ESP32Client")) { // 고유 id 아무거나 해도됌
+      Serial.println("connected");
+      // Subscribe
+      client.subscribe(topic.c_str());
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
 }
 
 void setup() {
@@ -327,19 +329,3 @@ void loop() {
     Serial.print("hellow");
   }
 }
-
-
-    // float o3 = taskParm2.lpPktData->mq131;
-    // float co = taskParm2.lpPktData->co;
-    // float no2 = taskParm2.lpPktData->no2;
-    // float nh3 = taskParm2.lpPktData->nh3;
-    // float c3h8 = taskParm2.lpPktData->c3h8;
-    // float c4h10 = taskParm2.lpPktData->c4h10;
-    // float ch4 = taskParm2.lpPktData->ch4;
-    // float h2 = taskParm2.lpPktData->h2;
-    // float c2h5oh = taskParm2.lpPktData->c2h5oh;
-    // float ch2o = taskParm2.lpPktData->ch2o;
-    // uint16_t srawVoc = taskParm2.lpPktData->voc;
-    // float co2 = taskParm2.lpPktData->co2;
-    // float temperature = taskParm2.lpPktData->temp;
-    // float humidity = taskParm2.lpPktData->humi;

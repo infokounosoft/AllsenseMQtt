@@ -50,22 +50,3 @@ void setup() {
 }
  
 void loop() {}
-
-// void OnWiFiEvent(WiFiEvent_t event){
-//   switch (event) {
- 
-//     case WIFI_EVENT_STA_CONNECTED:
-//       Serial.println("ESP32 Connected to WiFi Network");
-//       break;
-//     case WIFI_EVENT_AP_START:
-//       Serial.println("ESP32 soft AP started");
-//       break;
-//     case WIFI_EVENT_AP_STACONNECTED:
-//       Serial.println("Station connected to ESP32 soft AP");
-//       break;
-//     case WIFI_EVENT_AP_STADISCONNECTED:
-//       Serial.println("Station disconnected from ESP32 soft AP");
-//       break;
-//     default: break;
-//   }
-// }
